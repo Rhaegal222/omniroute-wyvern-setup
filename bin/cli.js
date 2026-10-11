@@ -85,7 +85,7 @@ async function main() {
     writeFileSafe(path.join(absTarget, '.env'), `PORT=${port}\n`);
     writeFileSafe(path.join(absTarget, 'config.json'), fs.readFileSync(path.join(__dirname, '../templates/config.json'), 'utf8'));
     try {
-      execSync('npm install omniroute', { cwd: absTarget, stdio: 'inherit' });
+      execSync('npm install omniroute --legacy-peer-deps', { cwd: absTarget, stdio: 'inherit' });
       console.log(`\nPer avviare:\n  cd ${absTarget}\n  npx omniroute serve --port ${port}`);
     } catch (e) { console.error("\n[ERRORE] Impossibile installare omniroute:", e.message); }
   }
