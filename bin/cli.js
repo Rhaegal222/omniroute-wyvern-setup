@@ -12,9 +12,11 @@ const rl = readline.createInterface({
 
 const ask = (query) => new Promise((resolve) => rl.question(query, resolve));
 
+const pkg = require('../package.json');
+
 async function main() {
   console.log("==========================================");
-  console.log("         OmniRoute Installer & Setup      ");
+  console.log(`         OmniRoute Installer v${pkg.version}      `);
   console.log("==========================================");
 
   let detectedTarget = null;
