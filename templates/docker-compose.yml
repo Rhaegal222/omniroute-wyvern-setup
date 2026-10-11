@@ -1,0 +1,90 @@
+services:
+  omniroute-vault-agent:
+    image: hashicorp/vault:1.19
+    user: "1000:1000"
+    command: ["vault", "agent", "-config=/etc/vault-agent/agent.hcl"]
+    environment:
+      VAULT_ADDR: "${VAULT_ADDR:-http://vault:18200}"
+      SKIP_CHOWN: "true"
+      SKIP_SETCAP: "true"
+    volumes:
+      - ./vault/agent.hcl:/etc/vault-agent/agent.hcl:ro
+      - ./vault/secrets.json.ctmpl:/etc/vault-agent/secrets.json.ctmpl:ro
+      - ${OMNIROUTE_VAULT_AUTH_DIR:-/home/rhaegal222/Server/runtime/vault/omniroute}:/run/vault-agent
+      - ${OMNIROUTE_SECRETS_DIR:-/home/rhaegal222/Server/runtime/secrets/omniroute}:/run/wyrmrest-secrets
+    networks:
+      shared_net:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: "no"
+
+  omniroute:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        OMNIROUTE_VERSION: ${OMNIROUTE_VERSION:-3.8.51}
+        OPENCODE_OMNIROUTE_AUTH_VERSION: ${OPENCODE_OMNIROUTE_AUTH_VERSION:-1.2.2}
+    image: ${OMNIROUTE_IMAGE:-wyrmrest/omniroute:3.8.51}
+    user: "1000:1000"
+    working_dir: /app
+    depends_on:
+      omniroute-vault-agent:
+        condition: service_completed_successfully
+    environment:
+      HOME: /home/node
+      DATA_DIR: /home/node/.omniroute
+      OMNIROUTE_SERVER_HOST: "0.0.0.0"
+      PORT: "20128"
+      OMNIROUTE_BASE_URL: "${OMNIROUTE_BASE_URL:-http://omniroute:20128/v1}"
+      OMNIROUTE_CHAT_ADMISSION_HEALTHY_HEADROOM: "${OMNIROUTE_CHAT_ADMISSION_HEALTHY_HEADROOM:-0}"
+      OMNIROUTE_CHAT_ADMISSION_QUEUE_MS: "${OMNIROUTE_CHAT_ADMISSION_QUEUE_MS:-30000}"
+      OMNIROUTE_CHAT_ADMISSION_MAX_QUEUED_BYTES: "${OMNIROUTE_CHAT_ADMISSION_MAX_QUEUED_BYTES:-8388608}"
+    volumes:
+      - ${OMNIROUTE_DATA_DIR:-/home/rhaegal222/.omniroute}:/home/node/.omniroute
+      - ${OMNIROUTE_SECRETS_DIR:-/home/rhaegal222/Server/runtime/secrets/omniroute}:/run/wyrmrest-secrets:ro
+    networks:
+      proxy_net:
+        aliases:
+          - omniroute
+      prod_net:
+        aliases:
+          - omniroute
+      shared_net:
+        aliases:
+          - omniroute
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+    restart: unless-stopped
+    labels:
+      autoheal: "true"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:20128/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "3"
+        tag: omniroute
+
+networks:
+  proxy_net:
+    external: true
+    name: proxy_net
+  prod_net:
+    external: true
+    name: prod_net
+  shared_net:
+    external: true
+    name: shared_net
