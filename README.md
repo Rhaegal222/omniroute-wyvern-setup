@@ -5,10 +5,33 @@ Installer CLI per configurare OmniRoute.
 ## Installazione
 
 ```bash
-npx omniroute-wyvern-setup
+npm install -g omniroute-wyvern-setup
 ```
 
 ## Utilizzo
+Esegui il comando:
+```bash
+omniroute-init
+```
+
+## Comportamento dell'Installer (Non Distruttivo)
+
+L'installer è progettato per essere **sicuro** per le tue configurazioni esistenti. Ecco come gestisce i file:
+
+### Cosa viene creato
+Se la directory target non esiste, l'installer crea la struttura di base e i file necessari per avviare OmniRoute.
+
+### Cosa NON viene sovrascritto
+L'installer verifica la presenza dei file prima di scriverli. Se un file (es. `.env` o `docker-compose.yml`) esiste già, **non verrà toccato**.
+
+| File | Comportamento |
+| :--- | :--- |
+| `.env` | **Saltato** se esistente (preserva le tue configurazioni). |
+| `docker-compose.yml` | **Saltato** se esistente (preserva le tue configurazioni). |
+
+Questo ti permette di mantenere intatte le tue personalizzazioni (API Keys, provider, configurazioni di rete) anche se rilanci lo script di setup.
+
+## Modalità di esecuzione
 Lo script ti guiderà nella scelta tra:
-- **Docker:** Utilizzando `docker-compose`.
-- **Nativo:** Installando direttamente il pacchetto npm.
+1. **Docker:** Utilizzando `docker-compose`.
+2. **Nativo:** Installando direttamente il pacchetto npm nel sistema.
