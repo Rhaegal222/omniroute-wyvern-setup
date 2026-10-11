@@ -17,8 +17,15 @@ async function main() {
   console.log("         OmniRoute Installer & Setup      ");
   console.log("==========================================");
 
-  let defaultTarget = path.join(os.homedir(), '.omniroute');
-  if (process.platform === 'win32' && process.env.APPDATA) {
+  let detectedTarget = null;
+  try {
+    const globalRoot = execSync('npm root -g', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    const candidate = path.join(globalRoot, 'omniroute');
+    if (fs.existsSync(candidate)) detectedTarget = candidate;
+  } catch (e) {}
+
+  let defaultTarget = detectedTarget || path.join(os.homedir(), '.omniroute');
+  if (!detectedTarget && process.platform === 'win32' && process.env.APPDATA) {
     defaultTarget = path.join(process.env.APPDATA, 'omniroute');
   }
 
@@ -36,66 +43,52 @@ async function main() {
     console.log(`Installazione esistente trovata in ${absTarget}. Procedo con l'ottimizzazione Wyvern (compressione e caching)...`);
   }
 
-  // Pre-flight: Check Port
   const port = 20128; // Default port
   try {
     execSync(`lsof -i :${port}`);
     console.warn(`[WARN] La porta ${port} sembra già in uso.`);
-  } catch (e) {
-    // Porta libera
-  }
+  } catch (e) {}
 
-  // Pre-flight: Check Docker
   const useDocker = (await ask("Vuoi usare Docker per eseguire OmniRoute? (s/N): ")).toLowerCase().startsWith('s');
+  
   if (useDocker) {
     try {
       execSync('docker --version', { stdio: 'ignore' });
     } catch (e) {
-      console.error("[ERRORE] Docker non trovato. Installalo o scegli la modalità Nativa.");
+      console.error("[ERRORE] Docker non trovato.");
       process.exit(1);
     }
   }
 
-  console.log(`\nCreazione directory in: ${absTarget}`);
   fs.mkdirSync(absTarget, { recursive: true });
   fs.mkdirSync(path.join(absTarget, 'templates'), { recursive: true });
 
   function writeFileSafe(filePath, content) {
     if (fs.existsSync(filePath)) {
-      console.log(`[SKIP] File esistente, non sovrascritto: ${path.relative(process.cwd(), filePath)}`);
+      console.log(`[SKIP] File esistente: ${path.relative(process.cwd(), filePath)}`);
       return;
     }
     fs.writeFileSync(filePath, content);
     console.log(`[OK] Creato: ${path.relative(process.cwd(), filePath)}`);
   }
 
-  console.log(useDocker ? "\nModalità selezionata: Docker" : "\nModalità selezionata: Nativa");
-
   if (useDocker) {
-    writeFileSafe(path.join(absTarget, 'docker-compose.yml'), `version: '3.8'\nservices:\n  omniroute:\n    image: wyrmrest/omniroute:3.8.51\n    ports:\n      - "${port}:20128"\n    volumes:\n      - ./config.json:/home/node/.omniroute/config.json:ro\n`);
+    writeFileSafe(path.join(absTarget, 'docker-compose.yml'), `version: '3.8'\nservices:\n  omniroute:\n    image: wyrmrest/omniroute:3.8.51\n    restart: unless-stopped\n    ports:\n      - "${port}:20128"\n    volumes:\n      - ./config.json:/home/node/.omniroute/config.json:ro\n`);
     writeFileSafe(path.join(absTarget, '.env'), `OMNIROUTE_VERSION=3.8.51\nPORT=${port}\n`);
     writeFileSafe(path.join(absTarget, 'config.json'), fs.readFileSync(path.join(__dirname, '../templates/config.json'), 'utf8'));
-    console.log(`\nPer avviare:\n  cd ${targetDir}\n  docker compose up -d`);
+    console.log(`\nPer avviare:\n  cd ${absTarget}\n  docker compose up -d`);
   } else {
-    // Pre-flight: Check npm for native mode
-    try {
-      execSync('npm --version', { stdio: 'ignore' });
-    } catch (e) {
-      console.error("[ERRORE] npm non trovato sul sistema. Impossibile procedere con l'installazione nativa.");
+    try { execSync('npm --version', { stdio: 'ignore' }); } catch (e) {
+      console.error("[ERRORE] npm non trovato.");
       process.exit(1);
     }
-
     writeFileSafe(path.join(absTarget, '.env'), `PORT=${port}\n`);
     writeFileSafe(path.join(absTarget, 'config.json'), fs.readFileSync(path.join(__dirname, '../templates/config.json'), 'utf8'));
     try {
       execSync('npm install omniroute', { cwd: absTarget, stdio: 'inherit' });
-      console.log(`\nPer avviare:\n  cd ${targetDir}\n  npx omniroute serve --port ${port}`);
-    } catch (e) {
-      console.error("\n[ERRORE] Impossibile installare omniroute:", e.message);
-    }
+      console.log(`\nPer avviare:\n  cd ${absTarget}\n  npx omniroute serve --port ${port}`);
+    } catch (e) { console.error("\n[ERRORE] Impossibile installare omniroute:", e.message); }
   }
-
   rl.close();
 }
-
 main();
