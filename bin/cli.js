@@ -84,10 +84,15 @@ async function main() {
     }
     writeFileSafe(path.join(absTarget, '.env'), `PORT=${port}\n`);
     writeFileSafe(path.join(absTarget, 'config.json'), fs.readFileSync(path.join(__dirname, '../templates/config.json'), 'utf8'));
-    try {
-      execSync('npm install omniroute --legacy-peer-deps', { cwd: absTarget, stdio: 'inherit' });
-      console.log(`\nPer avviare:\n  cd ${absTarget}\n  npx omniroute serve --port ${port}`);
-    } catch (e) { console.error("\n[ERRORE] Impossibile installare omniroute:", e.message); }
+    if (exists) {
+      console.log("\n[SKIP] OmniRoute già installato: nessuna reinstallazione necessaria.");
+      console.log(`\nPer avviare:\n  omniroute serve --port ${port}`);
+    } else {
+      try {
+        execSync('npm install omniroute --legacy-peer-deps', { cwd: absTarget, stdio: 'inherit' });
+        console.log(`\nPer avviare:\n  cd ${absTarget}\n  npx omniroute serve --port ${port}`);
+      } catch (e) { console.error("\n[ERRORE] Impossibile installare omniroute:", e.message); }
+    }
   }
   rl.close();
 }
