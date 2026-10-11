@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const os = require('os');
 const { execSync } = require('child_process');
 
 const rl = readline.createInterface({
@@ -16,7 +17,12 @@ async function main() {
   console.log("         OmniRoute Installer & Setup      ");
   console.log("==========================================");
 
-  const targetDir = await ask("Directory di installazione target [./omniroute-setup]: ") || "./omniroute-setup";
+  let defaultTarget = path.join(os.homedir(), '.omniroute');
+  if (process.platform === 'win32' && process.env.APPDATA) {
+    defaultTarget = path.join(process.env.APPDATA, 'omniroute');
+  }
+
+  const targetDir = await ask(`Directory di installazione target [${defaultTarget}]: `) || defaultTarget;
   const absTarget = path.resolve(process.cwd(), targetDir);
 
   // Pre-flight: Check Port
