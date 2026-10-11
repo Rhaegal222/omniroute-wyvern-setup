@@ -37,11 +37,13 @@ async function main() {
   console.log(useDocker ? "\nModalità selezionata: Docker" : "\nModalità selezionata: Nativa");
 
   if (useDocker) {
-    writeFileSafe(path.join(absTarget, 'docker-compose.yml'), `version: '3.8'\nservices:\n  omniroute:\n    image: wyrmrest/omniroute:3.8.51\n    ports:\n      - "${data.port || 20128}:20128"\n`);
+    writeFileSafe(path.join(absTarget, 'docker-compose.yml'), `version: '3.8'\nservices:\n  omniroute:\n    image: wyrmrest/omniroute:3.8.51\n    ports:\n      - "${data.port || 20128}:20128"\n    volumes:\n      - ./config.json:/home/node/.omniroute/config.json:ro\n`);
     writeFileSafe(path.join(absTarget, '.env'), `OMNIROUTE_VERSION=3.8.51\nPORT=${data.port || 20128}\n`);
+    writeFileSafe(path.join(absTarget, 'config.json'), fs.readFileSync(path.join(__dirname, '../templates/config.json'), 'utf8'));
     console.log(`\nPer avviare:\n  cd ${targetDir}\n  docker compose up -d`);
   } else {
     writeFileSafe(path.join(absTarget, '.env'), `PORT=${data.port || 20128}\n`);
+    writeFileSafe(path.join(absTarget, 'config.json'), fs.readFileSync(path.join(__dirname, '../templates/config.json'), 'utf8'));
     try {
       execSync('npm install omniroute', { cwd: absTarget, stdio: 'inherit' });
       console.log(`\nPer avviare:\n  cd ${targetDir}\n  npx omniroute serve --port ${data.port || 20128}`);
