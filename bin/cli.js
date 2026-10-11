@@ -60,6 +60,14 @@ async function main() {
     writeFileSafe(path.join(absTarget, 'config.json'), fs.readFileSync(path.join(__dirname, '../templates/config.json'), 'utf8'));
     console.log(`\nPer avviare:\n  cd ${targetDir}\n  docker compose up -d`);
   } else {
+    // Pre-flight: Check npm for native mode
+    try {
+      execSync('npm --version', { stdio: 'ignore' });
+    } catch (e) {
+      console.error("[ERRORE] npm non trovato sul sistema. Impossibile procedere con l'installazione nativa.");
+      process.exit(1);
+    }
+
     writeFileSafe(path.join(absTarget, '.env'), `PORT=${port}\n`);
     writeFileSafe(path.join(absTarget, 'config.json'), fs.readFileSync(path.join(__dirname, '../templates/config.json'), 'utf8'));
     try {
