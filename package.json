@@ -1,5 +1,5 @@
 {
-  "name": "omniroute-wyvern",
+  "name": "omniroute-wyvern-setup",
   "version": "1.0.0",
   "description": "Installer CLI interattivo per OmniRoute con supporto opzionale Docker o installazione nativa",
   "main": "index.js",
