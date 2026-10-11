@@ -47,9 +47,14 @@ async function main() {
 
   const port = 20128; // Default port
   try {
-    execSync(`lsof -i :${port}`);
-    console.warn(`[WARN] La porta ${port} sembra già in uso.`);
-  } catch (e) {}
+    execSync('command -v lsof', { stdio: 'ignore' });
+    try {
+      execSync(`lsof -i :${port}`, { stdio: 'ignore' });
+      console.warn(`[WARN] La porta ${port} sembra già in uso.`);
+    } catch (e) {}
+  } catch (e) {
+    // lsof non installato, saltiamo il check
+  }
 
   const useDocker = (await ask("Vuoi usare Docker per eseguire OmniRoute? (s/N): ")).toLowerCase().startsWith('s');
   
