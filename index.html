@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>OmniRoute Wyvern Setup</title>
+  <style>
+    body { font-family: sans-serif; background: #0a0b10; color: #f3f4f6; padding: 30px; }
+    h2 { color: #e5c158; }
+    label { display: block; margin-top: 15px; font-size: 14px; }
+    input, select { width: 100%; padding: 8px; margin-top: 5px; background: #161924; border: 1px solid #262a3b; color: #fff; border-radius: 4px; }
+    button { margin-top: 25px; width: 100%; padding: 10px; background: #e5c158; color: #0a0b10; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #d4af37; }
+  </style>
+</head>
+<body>
+  <h2>OmniRoute Setup</h2>
+  <label>Directory di destinazione:
+    <input type="text" id="targetDir" value="./omniroute-setup">
+  </label>
+  <label>Porta:
+    <input type="number" id="port" value="20128">
+  </label>
+  <label>Modalità di esecuzione:
+    <select id="useDocker">
+      <option value="true">Docker (Docker Compose)</option>
+      <option value="false">Nativo (Node.js)</option>
+    </select>
+  </label>
+  <button id="submitBtn">Installa e Configura</button>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    document.getElementById('submitBtn').addEventListener('click', () => {
+      const targetDir = document.getElementById('targetDir').value;
+      const port = document.getElementById('port').value;
+      const useDocker = document.getElementById('useDocker').value === 'true';
+
+      ipcRenderer.send('setup-complete', { targetDir, port, useDocker });
+      alert('Configurazione completata con successo!');
+      window.close();
+    });
+  </script>
+</body>
+</html>

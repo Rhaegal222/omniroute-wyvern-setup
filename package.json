@@ -2,12 +2,16 @@
   "name": "omniroute-wyvern-setup",
   "version": "1.0.0",
   "description": "Installer CLI interattivo per OmniRoute con supporto opzionale Docker o installazione nativa",
-  "main": "index.js",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
   "bin": {
     "omniroute-init": "./bin/cli.js"
   },
-  "dependencies": {},
-  "devDependencies": {},
+  "devDependencies": {
+    "electron": "^44.7.0"
+  },
   "keywords": [
     "omniroute",
     "installer",
