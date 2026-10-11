@@ -19,6 +19,25 @@ async function main() {
   const targetDir = await ask("Directory di installazione target [./omniroute-setup]: ") || "./omniroute-setup";
   const absTarget = path.resolve(process.cwd(), targetDir);
 
+  // Pre-flight: Check Port
+  try {
+    execSync(`lsof -i :${data.port || 20128}`);
+    console.warn(`[WARN] La porta ${data.port || 20128} sembra già in uso.`);
+  } catch (e) {
+    // Porta libera
+  }
+
+  // Pre-flight: Check Docker
+  const useDocker = (await ask("Vuoi usare Docker per eseguire OmniRoute? (s/N): ")).toLowerCase().startsWith('s');
+  if (useDocker) {
+    try {
+      execSync('docker --version', { stdio: 'ignore' });
+    } catch (e) {
+      console.error("[ERRORE] Docker non trovato. Installalo o scegli la modalità Nativa.");
+      process.exit(1);
+    }
+  }
+
   console.log(`\nCreazione directory in: ${absTarget}`);
   fs.mkdirSync(absTarget, { recursive: true });
   fs.mkdirSync(path.join(absTarget, 'templates'), { recursive: true });

@@ -33,5 +33,8 @@ Questo ti permette di mantenere intatte le tue personalizzazioni (API Keys, prov
 
 ## Modalità di esecuzione
 Lo script ti guiderà nella scelta tra:
-1. **Docker:** Utilizzando `docker-compose`.
+1. **Docker:** Utilizzando `docker-compose` (incluso healthcheck automatico).
 2. **Nativo:** Installando direttamente il pacchetto npm nel sistema.
+
+## Ottimizzazione (Tuning)
+Puoi regolare le prestazioni (compressione e cache) modificando il file `config.json` generato nella cartella di installazione. Il file non viene sovrascritto se rilanci l'installer.
