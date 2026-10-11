@@ -25,8 +25,19 @@ async function main() {
   const targetDir = await ask(`Directory di installazione target [${defaultTarget}]: `) || defaultTarget;
   const absTarget = path.resolve(process.cwd(), targetDir);
 
+  const exists = fs.existsSync(absTarget);
+  if (!exists) {
+    const proceed = (await ask(`Directory ${absTarget} non trovata. Vuoi crearla e procedere con un nuovo setup Wyvern? (s/N): `)).toLowerCase().startsWith('s');
+    if (!proceed) {
+      console.log("Installazione annullata.");
+      process.exit(0);
+    }
+  } else {
+    console.log(`Installazione esistente trovata in ${absTarget}. Procedo con l'ottimizzazione Wyvern (compressione e caching)...`);
+  }
+
   // Pre-flight: Check Port
-  const port = data?.port || 20128;
+  const port = 20128; // Default port
   try {
     execSync(`lsof -i :${port}`);
     console.warn(`[WARN] La porta ${port} sembra già in uso.`);
