@@ -25,37 +25,28 @@ async function main() {
 
   const useDocker = (await ask("Vuoi usare Docker per eseguire OmniRoute? (s/N): ")).toLowerCase().startsWith('s');
 
-  console.log(useDocker ? "\nModalità selezionata: Docker (Docker Compose)" : "\nModalità selezionata: Installazione Nativa (Node.js)");
+  function writeFileSafe(filePath, content) {
+    if (fs.existsSync(filePath)) {
+      console.log(`[SKIP] File esistente, non sovrascritto: ${path.relative(process.cwd(), filePath)}`);
+      return;
+    }
+    fs.writeFileSync(filePath, content);
+    console.log(`[OK] Creato: ${path.relative(process.cwd(), filePath)}`);
+  }
+
+  console.log(useDocker ? "\nModalità selezionata: Docker" : "\nModalità selezionata: Nativa");
 
   if (useDocker) {
-    // Scriviamo docker-compose e Dockerfile ed .env
-    const templateDir = path.join(__dirname, '../templates');
-    // Generiamo i file di esempio
-    fs.writeFileSync(path.join(absTarget, 'docker-compose.yml'), `# Docker Compose per OmniRoute
-version: '3.8'
-services:
-  omniroute:
-    image: wyrmrest/omniroute:3.8.51
-    restart: unless-stopped
-    ports:
-      - "20128:20128"
-    environment:
-      - PORT=20128
-      - OMNIROUTE_SERVER_HOST=0.0.0.0
-`);
-    fs.writeFileSync(path.join(absTarget, '.env'), `OMNIROUTE_VERSION=3.8.51\nPORT=20128\n`);
-    console.log("\n[OK] Creati docker-compose.yml e .env nella cartella di installazione.");
+    writeFileSafe(path.join(absTarget, 'docker-compose.yml'), `version: '3.8'\nservices:\n  omniroute:\n    image: wyrmrest/omniroute:3.8.51\n    ports:\n      - "${data.port || 20128}:20128"\n`);
+    writeFileSafe(path.join(absTarget, '.env'), `OMNIROUTE_VERSION=3.8.51\nPORT=${data.port || 20128}\n`);
     console.log(`\nPer avviare:\n  cd ${targetDir}\n  docker compose up -d`);
   } else {
-    // Installazione nativa
-    console.log("\nInstallazione dipendenze e configurazione nativa...");
-    fs.writeFileSync(path.join(absTarget, '.env'), `PORT=20128\n`);
+    writeFileSafe(path.join(absTarget, '.env'), `PORT=${data.port || 20128}\n`);
     try {
       execSync('npm install omniroute', { cwd: absTarget, stdio: 'inherit' });
-      console.log("\n[OK] Pacchetto npm 'omniroute' installato con successo.");
-      console.log(`\nPer avviare:\n  cd ${targetDir}\n  npx omniroute serve --port 20128`);
+      console.log(`\nPer avviare:\n  cd ${targetDir}\n  npx omniroute serve --port ${data.port || 20128}`);
     } catch (e) {
-      console.error("\n[ERRORE] Impossibile installare il pacchetto npm:", e.message);
+      console.error("\n[ERRORE] Impossibile installare omniroute:", e.message);
     }
   }
 
